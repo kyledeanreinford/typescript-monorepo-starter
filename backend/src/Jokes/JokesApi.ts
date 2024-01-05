@@ -1,36 +1,20 @@
 import * as schema from 'schemawax';
 import {ServerRoute} from '@hapi/hapi';
 import {JokeFields, jokesRepo} from './JokesRepo';
-import {decoders, typedRoute} from '../ApiSupport';
-
-type SearchQuery =
-    { readonly search?: string }
-
-type ShowPathParams =
-    { readonly id: number }
-
+import {SearchQuery, searchQueryDecoder, ShowPathParams, showPathParamsDecoder, typedRoute} from '../ApiSupport';
 
 const fieldsDecoder: schema.Decoder<JokeFields> =
     schema.object({
         required: {joke: schema.string},
     });
 
-const searchQueryDecoder: schema.Decoder<SearchQuery> =
-    schema.object({optional: {search: schema.string}});
-
-const showPathParamsDecoder: schema.Decoder<ShowPathParams> =
-    schema.object({
-        required: {id: decoders.stringToInt},
-    });
-
-
-const randomRoute = (deps: Dependencies): ServerRoute =>
+const randomJoke = (deps: Dependencies): ServerRoute =>
     typedRoute.get('/api/jokes/random', {
         decoders: typedRoute.decoders,
         handler: async (_, {h}) => h.response({data: await deps.randomJoke()}),
     });
 
-const addRoute = (deps: Dependencies): ServerRoute =>
+const addJoke = (deps: Dependencies): ServerRoute =>
     typedRoute.post<JokeFields>('/api/jokes', {
         decoders: {...typedRoute.decoders, body: fieldsDecoder},
         handler: async ({body}, {h}) => {
@@ -39,7 +23,7 @@ const addRoute = (deps: Dependencies): ServerRoute =>
         },
     });
 
-const listRoute = (deps: Dependencies): ServerRoute =>
+const listJoke = (deps: Dependencies): ServerRoute =>
     typedRoute.get<SearchQuery>('/api/jokes', {
         decoders: {...typedRoute.decoders, query: searchQueryDecoder},
         handler: async ({query}, {h}) => {
@@ -50,7 +34,7 @@ const listRoute = (deps: Dependencies): ServerRoute =>
         },
     });
 
-const showRoute = (deps: Dependencies): ServerRoute =>
+const findJoke = (deps: Dependencies): ServerRoute =>
     typedRoute.get<unknown, ShowPathParams>('/api/jokes/{id}', {
         decoders: {...typedRoute.decoders, path: showPathParamsDecoder},
         handler: async ({path}, {h}) => {
@@ -74,9 +58,9 @@ type Dependencies = typeof dependencies;
 
 export const jokesApi = {
     routes: (deps = dependencies) => [
-        randomRoute(deps),
-        addRoute(deps),
-        listRoute(deps),
-        showRoute(deps),
+        randomJoke(deps),
+        addJoke(deps),
+        listJoke(deps),
+        findJoke(deps),
     ],
 };

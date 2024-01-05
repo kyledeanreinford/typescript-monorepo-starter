@@ -1,10 +1,12 @@
 import * as Hapi from '@hapi/hapi';
 import {jokesApi} from '../Jokes';
 import {healthApi} from './HealthApi';
+import {commentsApi} from '../Comments';
 
 const defaultRoutes = [
     healthApi.route(),
     jokesApi.routes(),
+    commentsApi.routes(),
 ].flat();
 
 const defaultOptions = {

@@ -1,4 +1,4 @@
-import {jokesData} from './JokesData';
+import {Pool} from 'pg';
 
 export type JokeFields = {
     readonly joke: string
@@ -15,31 +15,39 @@ export type JokesRepo = {
     readonly search: (query: string) => Promise<readonly JokeRecord[]>
 }
 
-const create = (initialJokes: readonly JokeRecord[] = jokesData): JokesRepo => {
-    // eslint-disable-next-line functional/prefer-readonly-type
-    const jokes: JokeRecord[] = initialJokes.slice();
-
+const create = (pool: Pool): JokesRepo => {
     return {
         random: async () => {
-            const index = Math.floor(Math.random() * jokes.length);
-            return jokes[index];
+            const result = await pool.query('select * from jokes');
+            const allJokes = result.rows;
+            const index = Math.floor(Math.random() * allJokes.length);
+            return allJokes[index];
         },
         add: async fields => {
-            const lastJoke = jokes[jokes.length - 1];
-            const newJoke = {...fields, id: lastJoke.id + 1};
-            jokes.push(newJoke);
-            return newJoke;
+            const result = await pool.query('insert into jokes (joke) values ($1) returning id', [fields.joke]);
+            return {...fields, id: result.rows[0].id};
         },
-        find: async (id: number) =>
-            jokes.find(it => it.id === id),
-        findAll: async () =>
-            jokes.slice(),
-        search: async (query: string) =>
-            jokes.slice().filter(it => it.joke.includes(query)),
+        find: async (id: number) => {
+            const result = await pool.query('select * from jokes where id = $1', [id]);
+            return result.rows[0];
+        },
+        findAll: async () => {
+            const result = await pool.query('select * from jokes');
+            return result.rows;
+        },
+        search: async (query: string) => {
+            const result = await pool.query('select * from jokes where joke ~ $1', [query]);
+            return result.rows;
+        },
     };
 };
 
-const singleton = create();
+const singleton = create(new Pool({
+    host: 'localhost',
+    user: 'canyon',
+    database: 'jokesdb',
+    port: 5432,
+}));
 
 export const jokesRepo = {
     create,

@@ -12,5 +12,9 @@
     "dependencies": {
         "schemawax": "^1.0.12",
         "ts-pattern": "^5.0.6"
+    },
+    "scripts": {
+        "seed-db": "psql -U postgres < seed-db.sql",
+        "test-db": "psql -U postgres < test-db.sql"
     }
 }
